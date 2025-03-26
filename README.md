@@ -34,6 +34,51 @@ This blueprint guides you to ...
 
 ## Quick-start
 
+Create a virtual environment and install the dependencies:
+
+``` sh
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install 'whisper-bidec @ https://github.com/OHF-Voice/whisper-bidec/archive/refs/tags/v0.0.1.tar.gz'
+```
+
+Download an example WAV file:
+
+``` sh
+wget "https://github.com/OHF-Voice/whisper-bidec/raw/refs/heads/main/tests/wav/what's%20the%20temperature%20of%20the%20EcoBee.wav"
+```
+
+Test transcribing the WAV file without any bias:
+
+``` sh
+python3 -m whisper_bidec "what's the temperature of the EcoBee.wav"
+```
+
+This outputs CSV with the format `wav file|text without bias|text with bias` like:
+
+``` csv
+what's the temperature of the EcoBee.wav|What's the temperature of the incubi?|What's the temperature of the incubi?
+```
+
+Without bias, the WAV file is incorrectly transcribed as "What's the temperature of the **incubi**?"
+
+Let's add a few example sentences that will bias Whisper towards the "EcoBee" device:
+
+``` sh
+cat > example_sentences.txt <<EOF
+What's the temperature of the EcoBee?
+What is the temperature of the EcoBee?
+EOF
+```
+
+Now we can see the corrected transcript:
+
+``` sh
+python3 -m whisper_bidec --text example_sentences.txt "what's the temperature of the EcoBee.wav"
+what's the temperature of the EcoBee.wav|What's the temperature of the incubi?|What's the temperature of the EcoBee?
+```
+
+The bias can be adjusted with `--bias-towards-lm <BIAS>` which defaults to 0.5. Increasing this value will bias Whisper more towards the example sentences.
 
 ## How it Works
 
