@@ -1,13 +1,13 @@
 import csv
 import os
 import tempfile
-from pathlib import Path
 from typing import Tuple
 
 import gradio as gr
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from whisper_bidec import decode_wav, get_logits_processor, load_corpus_from_sentences
 from pydub import AudioSegment
+
 
 def _parse_file(file_path: str) -> list[str]:
     """Parse .txt / .md / .csv and return its content as a list of strings by splitting per new line or row."""
@@ -23,8 +23,9 @@ def _parse_file(file_path: str) -> list[str]:
             sentences = f.readlines()
     return sentences
 
+
 def _convert_audio(input_audio_path: str) -> str:
-    """ Whisper decoder expects wav files with 16kHz sample rate and mono channel.
+    """Whisper decoder expects wav files with 16kHz sample rate and mono channel.
     Convert the audio file to this format, save it in a tmp file and return the path.
     """
     fd, tmp_path = tempfile.mkstemp(suffix=".wav")
@@ -34,6 +35,7 @@ def _convert_audio(input_audio_path: str) -> str:
     audio = audio.set_channels(1).set_frame_rate(16000)
     audio.export(tmp_path, format="wav")
     return tmp_path
+
 
 def transcribe(
     processor_name: str,
@@ -65,7 +67,9 @@ def transcribe(
     else:
         text_with_bias = ""
 
-    text_no_bias = decode_wav(model, processor, converted_audio_path, logits_processor=None)
+    text_no_bias = decode_wav(
+        model, processor, converted_audio_path, logits_processor=None
+    )
 
     return text_no_bias, text_with_bias
 
