@@ -1,10 +1,12 @@
 import csv
-from pathlib import Path
+import os
+import tempfile
 from typing import Tuple
 
 import gradio as gr
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from whisper_bidec import decode_wav, get_logits_processor, load_corpus_from_sentences
+from pydub import AudioSegment
 
 
 def _parse_file(file_path: str) -> list[str]:
@@ -22,9 +24,22 @@ def _parse_file(file_path: str) -> list[str]:
     return sentences
 
 
+def _convert_audio(input_audio_path: str) -> str:
+    """Whisper decoder expects wav files with 16kHz sample rate and mono channel.
+    Convert the audio file to this format, save it in a tmp file and return the path.
+    """
+    fd, tmp_path = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)  # Close file descriptor
+
+    audio = AudioSegment.from_file(input_audio_path)
+    audio = audio.set_channels(1).set_frame_rate(16000)
+    audio.export(tmp_path, format="wav")
+    return tmp_path
+
+
 def transcribe(
     processor_name: str,
-    audio: str,
+    audio_path: str,
     bias_strength: float,
     bias_text: str | None,
     bias_text_file: str | None,
@@ -36,8 +51,10 @@ def transcribe(
 
     if bias_text:
         sentences = bias_text.split(",")
-    elif Path(bias_text_file).is_file():
+    elif bias_text_file:
         sentences = _parse_file(bias_text_file)
+
+    converted_audio_path = _convert_audio(audio_path)
 
     if sentences:
         corpus = load_corpus_from_sentences(sentences, processor)
@@ -45,12 +62,14 @@ def transcribe(
             corpus=corpus, processor=processor, bias_towards_lm=bias_strength
         )
         text_with_bias = decode_wav(
-            model, processor, audio, logits_processor=logits_processor
+            model, processor, converted_audio_path, logits_processor=logits_processor
         )
     else:
         text_with_bias = ""
 
-    text_no_bias = decode_wav(model, processor, audio, logits_processor=None)
+    text_no_bias = decode_wav(
+        model, processor, converted_audio_path, logits_processor=None
+    )
 
     return text_no_bias, text_with_bias
 
