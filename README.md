@@ -26,6 +26,9 @@
 ## Example Results
 
 
+https://github.com/user-attachments/assets/656f4e7b-d699-4460-80eb-9551e63ba041
+
+
 Whisper tiny before and after biasing with the text: "Dileesh Pothan":
 
 | Without Bias | With Bias |
