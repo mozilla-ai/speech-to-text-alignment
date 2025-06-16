@@ -19,6 +19,7 @@ jobs:
       - name: Copy demo Dockerfile
         run: |
           cp demo/app.py hf-space/app.py
+          cp requirements.txt hf-space/requirements.txt
 
       - name: Check if there are any changes
         id: check_changes
